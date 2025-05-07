@@ -23,20 +23,23 @@ jobs:
       - name: Push imagem
         run: docker push ghcr.io/${{ github.repository }}:latest
       
-      - name: Instalar o Helm
-        uses: azure/setup-helm@v3
-        with:
-          version: v3.12.0
-        
       - name: Setup Kind cluster
         uses: helm/kind-action@v1.6.0
+
+      - name: Instalar o Helm
+        uses: azure/setup-helm@v3
 
       - name: Verificar se o cluster Kind está acessível
         run: kubectl cluster-info
 
       - name: Deploy com Helm no Kind
         run: |
-         helm upgrade --install api-python ./api-python/charts/api-python             --namespace demo             --create-namespace             --set image.repository=api-python-demo-tempo-atual             --set image.tag=latest             --set image.pullPolicy=Never
+          helm upgrade --install api-python ./charts/api-python \
+            --namespace demo \
+            --create-namespace \
+            --set image.repository=ghcr.io/${{ github.repository }} \
+            --set image.tag=latest \
+            --set image.pullPolicy=IfNotPresent
 
       - name: Esperar pod ficar pronto
         run: kubectl rollout status deployment api-python -n demo
