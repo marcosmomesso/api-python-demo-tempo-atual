@@ -36,7 +36,7 @@ jobs:
 
       - name: Deploy com Helm no Kind
         run: |
-         helm upgrade --install api-python ./api-python/charts/api-python             --namespace demo             --create-namespace             --set image.repository=api-python             --set image.tag=latest             --set image.pullPolicy=Never
+         helm upgrade --install api-python ./api-python/charts/api-python             --namespace demo             --create-namespace             --set image.repository=api-python-demo-tempo-atual             --set image.tag=latest             --set image.pullPolicy=Never
 
       - name: Esperar pod ficar pronto
         run: kubectl rollout status deployment api-python -n demo
