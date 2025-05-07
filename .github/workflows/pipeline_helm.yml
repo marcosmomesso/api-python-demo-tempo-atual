@@ -1,0 +1,44 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build imagem Docker
+        run: docker build -t ghcr.io/${{ github.repository }}:latest .
+
+      - name: Login no GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push imagem
+        run: docker push ghcr.io/${{ github.repository }}:latest
+      
+      - name: Instalar o Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.12.0
+  
+      - name: Deploy com Helm no Kind
+        run: |
+         helm upgrade --install api-python ./api-python/charts/api-python             --namespace demo             --create-namespace             --set image.repository=api-python             --set image.tag=latest             --set image.pullPolicy=Never
+
+      - name: Esperar pod ficar pronto
+        run: kubectl rollout status deployment api-python -n demo
+
+      - name: Testar endpoint local
+        run: |
+          kubectl port-forward svc/api-python 8080:8080 -n demo &
+          sleep 5
+          curl http://localhost:8080
+
+
